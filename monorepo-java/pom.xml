@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.easyroc</groupId>
+    <artifactId>monorep-java</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <!--当前项目修改为pom-->
+    <packaging>pom</packaging>
+    <modules>
+        <module>java-demo</module>
+    </modules>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!--版本确定好：在聚合工程的 properties 里定义版本号，本质是把版本号做成 “全局变量”，
+        核心目的是：
+        集中管理：所有模块共用的版本号只在父 POM 的 properties 里写一次，改版本时不用逐个模块改，只改父 POM 即可；
+        统一引用：子模块（或父 POM）在引用依赖时，通过 ${版本变量名} 引用，保证所有模块用的是同一个版本；-->
+        <spring-ai.version>1.0.0</spring-ai.version>
+        <spring-ai-alibaba.version>1.0.0.2</spring-ai-alibaba.version>
+        <spring-boot.version>3.4.5</spring-boot.version>
+    </properties>
+    <!--
+    dependencyManagement 统一管控依赖规则
+    给所有子模块制定一套 “依赖使用规范”：定义了哪些依赖可用、用什么版本、传递性依赖如何处理；
+    子模块想使用这些依赖时，只需要声明依赖坐标（groupId+artifactId），无需写版本号，自动沿用父 POM 里定义的版本；
+    核心价值：统一所有子模块的依赖版本，避免不同子模块用不同版本的同一依赖导致冲突，同时不强制子模块引入依赖（按需使用）。
+    -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-bom</artifactId>
+                <version>${spring-ai-alibaba.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <!--
+    在聚合工程父 POM 中配置spring-boot-maven-plugin插件，它是 Spring Boot 项目的核心构建插件，在聚合工程中的作用主要是为子模块提供 Spring Boot 相关的构建能力。
+    这个配置的核心作用:
+    spring-boot-maven-plugin是 Spring Boot 官方提供的 Maven 插件，主要负责Spring Boot 项目的打包、运行、依赖管理等构建操作。在聚合工程（多模块）中，父 POM 配置这个插件后，所有子模块可以继承该插件的配置，无需每个子模块重复写插件信息。
+    -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+
+
+</project>

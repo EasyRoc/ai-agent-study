@@ -1,0 +1,3 @@
+# Python 第 0 周 health_chat 与后续 openai 兼容调用
+openai>=1.40.0
+python-dotenv>=1.0.0

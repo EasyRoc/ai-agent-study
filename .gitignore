@@ -1,0 +1,11 @@
+.env
+**/.env
+.venv
+venv
+__pycache__/
+*.pyc
+.idea/
+.DS_Store
+**/target/
+**/build/
+**/.mvn/

@@ -1,0 +1,29 @@
+# 服务器
+server:
+  port: 8080
+
+spring:
+  application:
+    name: java-demo
+  # 官方属性前缀：见 https://java2ai.com/integration/chatmodels/dashScope
+  ai:
+    dashscope:
+      # 优先读 AI_DASHSCOPE_API_KEY（与官方 chatbot 示例一致）；未设置时再读 DASHSCOPE_API_KEY（与 monorepo-py 一致）
+      api-key: ${AI_DASHSCOPE_API_KEY:${DASHSCOPE_API_KEY:}}
+      chat:
+        options:
+          # 与 Python 侧默认 qwen-turbo 对齐；Function Calling（/api/v1/fc/chat、fc_min.py）建议 qwen-plus 等支持 tools 的模型
+          model: ${LLM_MODEL:qwen-turbo}
+
+# 第 1 周第 5 天：网关占位鉴权 + 内存限流（多实例不共享，生产请用统一网关/Redis 限流替代）
+app:
+  security:
+    api-key-header: X-API-Key
+    # 占位用 demo；部署时可设环境变量覆盖（不要提交真密钥到仓库）
+    expected-api-key: ${APP_EXPECTED_API_KEY:demo}
+    public-paths:
+      - /api/v1/health/**
+      - /error
+  rate-limit:
+    enabled: true
+    per-minute: 30
