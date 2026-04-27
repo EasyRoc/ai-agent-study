@@ -21,9 +21,10 @@
         核心目的是：
         集中管理：所有模块共用的版本号只在父 POM 的 properties 里写一次，改版本时不用逐个模块改，只改父 POM 即可；
         统一引用：子模块（或父 POM）在引用依赖时，通过 ${版本变量名} 引用，保证所有模块用的是同一个版本；-->
-        <spring-ai.version>1.0.0</spring-ai.version>
-        <spring-ai-alibaba.version>1.0.0.2</spring-ai-alibaba.version>
-        <spring-boot.version>3.4.5</spring-boot.version>
+        <!-- 与 spring-ai-alibaba-bom 推荐组合对齐；升级时以官方 BOM 与 DashScope starter 为准 -->
+        <spring-ai.version>1.1.2</spring-ai.version>
+        <spring-ai-alibaba.version>1.1.2.2</spring-ai-alibaba.version>
+        <spring-boot.version>3.5.10</spring-boot.version>
     </properties>
     <!--
     dependencyManagement 统一管控依赖规则
@@ -36,6 +37,14 @@
             <dependency>
                 <groupId>com.alibaba.cloud.ai</groupId>
                 <artifactId>spring-ai-alibaba-bom</artifactId>
+                <version>${spring-ai-alibaba.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- DashScope、RAG、MCP 等扩展模块版本；与 spring-ai-alibaba-bom 成对使用，见官方根 POM -->
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-extensions-bom</artifactId>
                 <version>${spring-ai-alibaba.version}</version>
                 <type>pom</type>
                 <scope>import</scope>

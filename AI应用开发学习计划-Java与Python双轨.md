@@ -12,8 +12,8 @@
 
 | 维度 | Python 侧重 | Java 侧重 |
 |------|-------------|-----------|
-| 定位 | 原型、脚本、RAG/Agent 生态（LangChain、各类 SDK）最先跑通 | 与现有微服务、Spring 生态、企业内对接方式一致 |
-| 建议栈 | `langchain` / `llama-index`（选其一主修）、`openai` 兼容客户端、Chroma 或 FAISS 起步 | **`Spring Boot 3` + [Spring AI Alibaba](https://github.com/alibaba/spring-ai-alibaba)**（在 **Spring AI** 之上、面向阿里云/通义等；本计划**默认** 以此为主线；**不** 与 **LangChain4j** 混用深挖） |
+| 定位 | 原型、脚本、RAG/Agent 生态（**LangChain 为主、LangGraph 按需**）最先跑通 | 与现有微服务、Spring 生态、企业内对接方式一致 |
+| 建议栈 | **`langchain` + `langgraph`（编排/多步/异步** 场景）**+** 向量（Chroma/FAISS 等，见周计划）；`openai` 兼容仅作**旁路/对照** | **`Spring Boot 3.5` + [Spring AI Alibaba](https://github.com/alibaba/spring-ai-alibaba)**：`spring-ai-alibaba-bom` + **`spring-ai-alibaba-extensions-bom`**（**DashScope** 等）**+** `spring-ai-bom`；**至少** `spring-ai-alibaba-starter-dashscope` + `spring-ai-alibaba-agent-framework`；**结构化输出** 以 **Spring AI Structured Output** 实现（**第 2 周**起贯穿）；**不** 与 **LangChain4j** 混用深挖） |
 | 每周节奏 | 约 **50% 时间** 写 Python 小实验 | 约 **50% 时间** 在 Java 中复现同一能力或做网关/适配层 |
 
 同一周 **共用同一小目标**（例如「本周完成最小 RAG」），先 Python 通，再 Java 接 HTTP/RPC，避免学两套无关教程。
@@ -64,11 +64,11 @@
 | 周次 | 主题 | Python 学练重点 | Java 学练重点 | 周产出物 |
 |------|------|-----------------|---------------|----------|
 | **1** | 大模型应用地图与 API 设计 | 官方 SDK 对话、**流式**、超时与重试；**选做**一次原生 **`tools`/`tool_choice`** 最小调用，理解**Function Calling** 与多轮续写 | Controller 层：鉴权占位、**SSE** 或流式响应封装 | 笔记：补全/对话/**Function Calling 落点** + 1 张请求时序草图 |
-| **2** | Prompt 与结构化输出 | 多版本 Prompt、**JSON mode / schema**、失败重试；**L0 短期记忆**：`sessionId`、**滑窗/截断** 后再拼进模型 | 同场景：模板外置；**会话消息** 按 thread 存取或内存模拟 | Prompt + **短期记忆** 最小实现说明（截断规则 1 条） |
-| **3** | Embedding 与向量库入门 | **L2 外显/检索记忆** 载体：分块、向量库、与对话记忆**分桶** 概念 | HTTP 调检索；**元数据** 预留 `source`, `scope` 等，为隔离铺垫 | 入库+检索 + **1 段话**：L2 与 L0 区别 |
-| **4** | RAG 完整链路 | 重排、带引用；RAG=**L2 读路径** 在图里**写清** | 编排/限流；`sessionId` 与 `knowledge` 请求**仍分维** | 可演示 RAG+**图示中标注 L2** |
-| **5** | 进阶 RAG 与**记忆** | 混合检索、评测；**L1 摘要** 选做；**L3 用户事实** 轻量表或 mock；`userId/tenantId` 在 chunk **metadata** 或侧表 | 缓存/幂等；**键** 含 `userId+query` 与「仅知识」 缓存**区分** | 评测表 + `memory-architecture.md` **草稿**（分层图） |
-| **6** | **ReAct、Function Calling、MCP、Skills** 与**记忆写入** | 同上 + **L3 选做**：`save_user_fact` 等 **Tool** 写入；多轮**依赖 L0** | 同上 + Tool 经 Java **鉴权** 再落库（演示） | 第 5 周对比表 + **记忆写入** 时序**可选 1 张** |
+| **2** | Prompt 与结构化输出 | **LangChain** `with_structured_output` / Pydantic；**L0 短期记忆**：`sessionId`、**滑窗/截断**；手写 JSON 解析仅作**对照** | **Spring AI Structured Output** + 模板外置 + **`spring-ai-alibaba-agent-framework`** 就位；`ChatClient` **强类型** 结果 + **L0** 滑窗进上下文 | 类型化产出 + `memory-l0-l1` 说明；**不** 以「仅字符串重试」为主验收 |
+| **3** | Embedding 与向量库入门 | **LangChain**：`Embeddings` + `TextSplitter` + `VectorStore`；**L2** 与 L0 **分桶** | HTTP 调 Python **或** Spring AI Alibaba 向量能力（**二选一**深）| 入库+检索 + **1 段话**：L2 与 L0 区别 |
+| **4** | RAG 完整链路 | **LangChain** 检索链 / **LangGraph** 节点化；**structured output** 产引用；RAG=**L2 读路径** 在图里**写清** | `ChatClient` +（聚合 **或** 本地）生成；**Structured Output** 定义 **citations DTO**；`sessionId` 与 `knowledge` **分维** | 可演示 RAG+**图示中标注 L2** |
+| **5** | 进阶 RAG 与**记忆** | 混合检索（**优先**用 LangChain retriever/ensemble **若**版本匹配）+ 评测；**L1/L3** 同前表 | 缓存/幂等；与 Spring AI Alibaba 栈**一致** | 评测表 + `memory-architecture.md` **草稿** |
+| **6** | **ReAct、Function Calling、MCP、Skills** 与**记忆写入** | **LangChain** `bind_tools` + ReAct/Agent；**L3 选**；**L0 依赖** | **Spring AI FC** + **agent-framework**；Tool 经 Java **鉴权**（演示） | FC/ReAct/MCP/Skills 笔记 + 可选记忆写入时序图 |
 | **7** | 异步、削峰、长任务 | 长任务可包含「**构建索引/摘要记忆**」等慢步骤（概念） | Kafka + 状态机 | 状态图 + **可标注** 哪些任务会**改** 记忆/索引 |
 | **8** | 可观测、成本、**记忆合规** | Token/latency、Guardrails + **记忆数据 PII、留存、删除**、**按用户导出/删** 设计口径 | MDC/切面；**不落库** 的敏感**对话** 策略（**截断/脱敏**） | 日志字段说明 + **记忆留存** 1 段政策说明（Demo 级） |
 | **9** | 综合项目 | **README** 中 **1 张记忆架构图**（L0～L2 必、L3 选）+ 与 RAG/Agent 关系 **1 段** | 网关侧 **session** 与 鉴权 一致 | 录屏+README **必含** 记忆段 |
@@ -89,21 +89,21 @@
 
 ### 第 2 周：Prompt 与结构化输出
 
-- [ ] **Python**：同一业务问题用 2 版 Prompt 对比；强制 JSON 输出并解析。
-- [ ] **Java**：Prompt 外置 + 统一解析层 + 重试策略（仅失败场景）。
+- [ ] **Python**：同一业务问题用 2 版 Prompt 对比；**优先** **LangChain** 的 **structured output**（Pydantic / `with_structured_output`）；**对照** 可选保留「手撕 JSON + 重试」一条脚本。
+- [ ] **Java**：Prompt 外置 + **Spring AI Structured Output** 绑定 DTO/Bean + **`spring-ai-alibaba-starter-dashscope`** 与 **`spring-ai-alibaba-agent-framework`**；字符串解析 + 重试**仅**作兜底。
 - [ ] **L0 短期记忆（必做，轻量）**：为聊天接口增加 `sessionId`（或 `conversationId`）；**只** 将「最近 N 轮」或**截断**后消息列表拼进请求；在代码或 `README` 写清 **N 或 字符 ceiling** 规则。
 - [ ] **L1 摘要（选做）**：当轮数 **大于** 某阈值，把更早轮次**换** 成 1 段 `summary`（可调用模型生成），再与最近轮**合并** 进上下文。
 - [ ] **产出**：错误样例 3 个与改法；**另**：`docs/memory-l0-l1.md` 或同目录笔记中 **3 行** 说明「无记忆 / 有滑窗 / 有摘要」差异。
 
 ### 第 3 周：Embedding 与检索
 
-- [ ] **Python**：`sentence-transformers` 或云 Embedding API + 本地向量库；**在文档或代码注释** 标明：本层为 **L2 外显/检索记忆**，**不** 替代第 2 周 **L0**。
+- [ ] **Python**：**优先** **LangChain** 的 `Embeddings` + `VectorStore` + 分块器；`sentence-transformers` 等仅作替换选项；**在文档或代码注释** 标明：本层为 **L2 外显/检索记忆**，**不** 替代第 2 周 **L0**。
 - [ ] **Java**：通过 RestTemplate / WebClient 调 Python 的 `/embed` 与 `/search`，或 **Spring AI / Spring AI Alibaba 提供的向量/检索**能力 选一种，避免三套向量实现。
 - [ ] **产出**：10 条短文本可检索、可复现；**1 段话**（可贴 README）：**L0 对话** 与 **L2 企业知识** 分存。
 
 ### 第 4 周：RAG 与引用
 
-- [ ] **Python**：LangChain 或自拼：retrieve → 拼 prompt → LLM，要求**输出引用 chunk id 或原文片段**；**在架构描述** 中把本链路**标为 L2**。
+- [ ] **Python**：**LangChain** 检索链或 **LangGraph** 多节点：retrieve → augment → generate；**引用** 用第 2 周同类 **structured output**；**在架构描述** 中把本链路**标为 L2**。
 - [ ] **Java**：`POST /ask` 入参 `question`、出参 `answer` + `citations`；**可选** 同时传 `sessionId` **仅** 用于审计/多轮，**不** 与 chunk 混库（除非有设计说明）。
 - [ ] **产出**：截图或日志证明「有依据」；**Mermaid/草图** 中 **L0 vs L2** 两条**读路径**。
 

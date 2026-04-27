@@ -2,7 +2,7 @@
 
 ## 做什么
 
-- Spring Boot 3 + **Spring AI Alibaba** `spring-ai-alibaba-starter-dashscope`
+- Spring Boot **3.5.x** + **Spring AI Alibaba**：`spring-ai-alibaba-starter-dashscope` + **`spring-ai-alibaba-agent-framework`**（版本由父 POM 的 **`spring-ai-alibaba-bom`** + **`spring-ai-alibaba-extensions-bom`** 与 **`spring-ai-bom`** 对齐；在 `monorepo-java/pom.xml` 集中管理）
 - `GET /api/v1/health/llm`：探活，向通义发「你好」，`preview` 为前 200 字（与 `monorepo-py/scripts/health_chat.py` 对齐）
 - **第 1 周第 3 天**：`POST /api/v1/chat` —— 同步多轮/单条对话
 - **第 1 周第 4 天**：`POST/GET /api/v1/chat/stream` —— **SSE**（`text/event-stream`）流式；`ChatClient` 的 `stream().content()`（Reactor `Flux`）**直连**通义，与上项共用同一 `application.yml` 中的 <code>spring.ai.dashscope</code>（<code>api-key</code>、<code>model</code> 等）  
@@ -13,6 +13,41 @@
 
 - **第 1 周第 6 天**（时序图 + 联调）：Mermaid 图与**双端各一条**命令在仓库 [根 `README`「第1周联调与验收」](../../../README.md#week1-acceptance)；时序与「直连/网关」图亦在周计划 [第 01 周第 6 天](../../../AI应用开发学习计划-周计划/第01周-大模型应用地图与API设计.md#week1-day6)。
 - **第 1 周第 7 天**（收尾 + **Function Calling**）：`POST /api/v1/fc/chat`；`Week01DemoTools`（`add_numbers` / `server_time_iso`）+ `ToolCallingChatOptions` + 框架内工具执行；Python 对照见 [`monorepo-py/scripts/fc_min.py`](../../../monorepo-py/scripts/fc_min.py)。通义请优先 **`qwen-plus`**（`spring.ai.dashscope.chat.options.model` 或 `LLM_MODEL`）。
+- **第 2 周**（**Structured Output** + L0 + 外置 Prompt）  
+  - **主路径**：`StructureExtractionService` 使用 **`ReactAgent`** + **`outputType(IntentSlotsResult.class)`**，返回的 `AssistantMessage` 再反序列化为强类型；多轮由 [**MemorySaver** checkpointer](https://java2ai.com/docs/frameworks/agent-framework/tutorials/memory) + **`RunnableConfig.threadId` / 请求体 `sessionId`** 维护，**非**手写 `ConcurrentHashMap`。  
+  - **滑窗**：`StructureL0TrimmingHook`（`MessagesModelHook`）在进模型前按 **`app.structure.l0.max-messages`** 裁剪 `messages`。  
+  - **L0**：`POST /api/v1/structure` 可带 `sessionId`；不带则响应里返回新 id（作 **threadId**）。说明见 [`docs/memory-l0-l1.md`](./docs/memory-l0-l1.md)。  
+  - **Prompt**：`src/main/resources/prompts/structure-v1.txt` / `structure-v2.txt`，由 `app.structure.prompt-version` 选择。切换：① `export SPRING_PROFILES_ACTIVE=v2`；② `export APP_STRUCTURE_PROMPT_VERSION=v2`。  
+  - **依赖坐标**（版本由父 BOM 管理）：`spring-ai-alibaba-starter-dashscope`、`spring-ai-alibaba-agent-framework`（内含 **graph-core** + `MemorySaver`）。
+
+### 第 2 周：`POST /api/v1/structure`（JSON）
+
+- **Request**：`{ "raw": "用户说法", "sessionId": "可选" }`  
+- **Response**：`{ "parsed": { "intent": "...", "slots": { ... } }, "promptVersion": "v1", "sessionId": "...", "historyMessageCount": N }`  
+- **错误**：解析/上游失败时 `502` + 课表统一 `ApiErrorResponse` 风格（由 `GlobalExceptionHandler` / 网关层处理，与第 1 周一致即可）。
+
+```bash
+# 单轮：不传 sessionId
+curl -s -X POST http://localhost:8080/api/v1/structure \
+  -H 'X-API-Key: demo' \
+  -H 'Content-Type: application/json' \
+  -d '{"raw":"帮我订周一下午三点的会议室 301"}' | jq .
+
+# 多轮：用返回的 sessionId 再发一轮
+# curl ... -d '{"raw":"改到四点","sessionId":"<上次的 sessionId>"}' | jq .
+```
+
+### 第 3 周：向量检索网关（`WebClient` → Python `POST /search`）
+
+- **配置**：`app.vector.base-url`（默认 `http://127.0.0.1:8010`），可用环境变量 `APP_VECTOR_BASE_URL` 覆盖；超时 `connect-timeout-ms` / `read-timeout-ms` 各 **5000**（与课表一致）。  
+- **实现**：`VectorServiceClient` + `spring-boot-starter-webflux` 的 `WebClient`；Python 未启动或超时时 **502**，`reason` 以 `VECTOR_TIMEOUT` 开头时 JSON `code` 为 **`VECTOR_TIMEOUT`**。  
+- **鉴权**：`GET /api/v1/vector-demo` 已加入 `app.security.public-paths`（本机演示；生产请收敛）。  
+- **先决条件**：在 `monorepo-py` 完成 **Milvus** 入库（`week03/ingest.sh`，默认 Milvus Lite 文件 `data/milvus_lite.db`）并启动 `uvicorn week03.api:app --port 8010`，见 [`monorepo-py/week03/README.md`](../../../monorepo-py/week03/README.md)。
+
+```bash
+# 需 Python 向量服务已监听 8010 且已 ingest
+curl -s "http://localhost:8080/api/v1/vector-demo?q=报销流程&k=3" | jq .
+```
 
 ## 环境
 

@@ -1,0 +1,5 @@
+# 激活：spring.profiles.active=v2
+# 使用 v2 提示词（含 one-shot 示例，一般更稳）
+app:
+  structure:
+    prompt-version: v2

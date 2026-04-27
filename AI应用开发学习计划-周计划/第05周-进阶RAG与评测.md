@@ -1,10 +1,10 @@
 # 第 5 周：进阶 RAG、混合检索与简单评测
 
-> 约 **5～7 个学习日**。目标：**混合检索**（向量 + 关键词/ BM25 至少一种）、**小评测集**、Java 侧 **缓存/幂等/限流** 之一落实。
+> 约 **5～7 个学习日**。目标：**混合检索**（向量 + 关键词/ BM25 至少一种）、**小评测集**、Java 侧 **缓存/幂等/限流** 之一落实。Python 在实现融合与评测脚本时，**能复用 LangChain 的 `EnsembleRetriever`、自定义 `BaseRetriever` 等则优先用**，无则手写融合逻辑亦可，但需在 README **一句话** 说明取舍。
 
 ## 本周目标
 
-- Python：在上周语料上增加 **关键词检索** 路径（如 `Whoosh` / `jieba + 倒排` / `rank_bm25` 对已有 chunk 建索引），与向量结果 **merge+去重+截断**；参数 `alpha` 控制权重可先手写规则（例如前 2 条 BM25 + 前 2 条向量）。
+- Python：在上周语料上增加 **关键词检索** 路径（如 `Whoosh` / `jieba + 倒排` / `rank_bm25` 对已有 chunk 建索引，或 **LangChain 封装的 BM25/混合检索** 若与你版本兼容），与向量结果 **merge+去重+截断**；参数 `alpha` 控制权重可先手写规则（例如前 2 条 BM25 + 前 2 条向量）。
 - 准备 **5～20 条** `question, expected_corpus_id 或 关键词` 的 CSV，**人工**标「好/中/差」与一句话原因。
 - Java：对 **同一 `question`** 的 RAG 查询做 **5 分钟** 内内存缓存或 Caffeine（key=hash(question)）；`POST` 写类请求若重复提交做 **idempotent key** 占位（可用内存 map）。
 

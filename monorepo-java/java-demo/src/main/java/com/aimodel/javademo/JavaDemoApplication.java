@@ -2,6 +2,8 @@ package com.aimodel.javademo;
 
 import com.aimodel.javademo.config.AppRateLimitProperties;
 import com.aimodel.javademo.config.AppSecurityProperties;
+import com.aimodel.javademo.config.AppStructureProperties;
+import com.aimodel.javademo.config.AppVectorProperties;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,7 +14,12 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  * Spring AI Alibaba 的 DashScope 自动配置会随类路径中的 starter 生效（见 application.yml）。
  */
 @SpringBootApplication
-@EnableConfigurationProperties({AppSecurityProperties.class, AppRateLimitProperties.class})
+@EnableConfigurationProperties({
+        AppSecurityProperties.class,
+        AppRateLimitProperties.class,
+        AppStructureProperties.class,
+        AppVectorProperties.class
+})
 public class JavaDemoApplication {
 
     public static void main(String[] args) {

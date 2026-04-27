@@ -36,10 +36,39 @@ python scripts/fc_min.py "11 加 22 等于多少，用工具算"
 # FC 通义建议 LLM_MODEL=qwen-plus（在 .env 或 export），与 Java 端一致
 ```
 
+## 第 2 周：Prompt 与 LangChain 结构化输出
+
+- 周计划：[`AI应用开发学习计划-周计划/第02周-Prompt与结构化输出.md`](../AI应用开发学习计划-周计划/第02周-Prompt与结构化输出.md)  
+- 入口脚本：[`scripts/week02_structured_intent.py`](./scripts/week02_structured_intent.py)（`with_structured_output` + 两版 system，各跑 5 次）  
+- 错例与改法模板：[`notes/failures.md`](./notes/failures.md)  
+- 依赖：安装 `pip install -r requirements.txt`（含 `langchain-core`、`langchain-openai`）
+
+```bash
+cd monorepo-py
+pip install -r requirements.txt
+python scripts/week02_structured_intent.py
+python scripts/week02_structured_intent.py "把会议室从三点改成四点半"
+```
+
+## 第 3 周：Embedding、Milvus 与 `/search`
+
+- 周计划：[`AI应用开发学习计划-周计划/第03周-Embedding与向量检索.md`](../AI应用开发学习计划-周计划/第03周-Embedding与向量检索.md)  
+- 说明与命令：[`week03/README.md`](./week03/README.md)  
+- 语料：`data/corpus.txt`；向量：默认 **Milvus Lite** 单文件 `data/milvus_lite.db`（可改为 `MILVUS_URI` 连独立 Milvus；见 `week03/milvus_settings.py`）  
+- `curl` 示例：[`notes/search-samples.md`](./notes/search-samples.md)  
+
+```bash
+cd monorepo-py
+pip install -r requirements.txt
+./week03/ingest.sh
+python3 -m uvicorn week03.api:app --host 0.0.0.0 --port 8010
+# 另开终端试搜：curl -s -X POST http://127.0.0.1:8010/search -H 'Content-Type: application/json' -d '{"q":"报销","k":3}' | jq .
+```
+
 ## 结构（随学习可继续补）
 
 - `scripts/` 脚本与第 0 / 1 周实验  
-- `week01/` 当周说明与索引  
-- 后续可增：`app/`（FastAPI）、`data/`（样例，勿提交大文件）等  
+- `week01/`、`week03/` 当周说明与入口  
+- `data/`：第 3 周语料与 Milvus Lite 数据文件（`milvus_lite.db` 已 `.gitignore`）  
 
 密钥与**本地**环境变量只放在本目录的 `.env`（已在上级 `.gitignore` 忽略）。

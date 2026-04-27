@@ -24,8 +24,8 @@
 
 ### 第 1 天：Function Calling 双端（无框架 Agent）
 
-- [ ] **Python**：手写 **最小**「两工具」：如 `get_leave_policy`（内部调第 3～4 周 `search`）、`get_weather(city)`（mock）。用 **openai/兼容** 的 `tools` 参数，自写**执行器**和**第二轮** `messages` 拼装；打印每次 `tool_calls` 的 `name` + `arguments`。
-- [ ] **Java**：用 **Spring AI Alibaba**（在 Spring AI **Function Calling** 能力上，与官方**工具/Bean** 注册方式一致）注册 2 个 **Tool**（如 `@Tool` 或**当前版本** 推荐写法），对外 `POST /api/v1/agent/fc`（名可自拟），在服务端执行工具、再调 `ChatClient`**直到** 出终答或达 max 轮；**不** 另开 LangChain4j 实现对比版（除非有精力做**附注**）。
+- [ ] **Python**：**路线 A** —— 用 **LangChain** 的 `bind_tools` + **Tool** 定义，跑通**两工具**（如 `get_leave_policy` 内调第 3～4 周 `search`、`get_weather` mock）；**路线 B**（**对照**）：手写 `openai/兼容` 的 `tool_calls` 执行器。**至少一条** 路线在仓库可运行并打日志。  
+- [ ] **Java**：用 **Spring AI Alibaba**（`spring-ai-alibaba-starter-dashscope` + 已引入的 **`spring-ai-alibaba-agent-framework`**）在 **Function Calling** 与官方**工具/Bean** 注册方式下，注册 2 个 **Tool**（如 `@Tool` 或**当前版本** 推荐写法），对外 `POST /api/v1/agent/fc`（名可自拟），在服务端执行工具、再调 `ChatClient`**直到** 出终答或达 max 轮；**不** 另开 LangChain4j 实现对比版（除非有精力做**附注**）。
 - [ ] 产出：「**FC 和手写 JSON 的 ReAct 假动作** 有什么**工程差异**」3 bullet 写 `notes/fc-notes.md`。
 
 ### 第 2 天：ReAct 与轨迹

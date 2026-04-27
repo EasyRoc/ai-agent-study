@@ -1,3 +1,17 @@
 # Python 第 0 周 health_chat 与后续 openai 兼容调用
+# milvus-lite 仍依赖 pkg_resources；setuptools 81+ 起该模块从默认可导入路径移除，需钉在 <81
+setuptools>=69,<81
 openai>=1.40.0
 python-dotenv>=1.0.0
+# 第 2 周起：LangChain 结构化输出（与课表一致）
+langchain-core>=0.3.0
+langchain-openai>=0.2.0
+pydantic>=2.0
+# 第 3 周：FastAPI 向量服务 + Milvus（langchain_milvus；默认本机 Milvus Lite 见 week03/milvus_settings）
+# 连本地 *.db 时 pymilvus 会 `import milvus_lite`；须同时装 pymilvus 与 **milvus-lite**（单独一行，避免只解析到 pymilvus）
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pymilvus[milvus_lite]>=2.4.2
+milvus-lite>=2.4.0
+langchain-milvus>=0.1.0
+langchain-text-splitters>=0.3.0

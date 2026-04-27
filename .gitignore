@@ -9,3 +9,6 @@ __pycache__/
 **/target/
 **/build/
 **/.mvn/
+# 第 3 周 Milvus Lite 本地数据文件（ingest 生成，可删后重建）
+**/data/milvus_lite.db
+**/data/milvus_lite.db-journal

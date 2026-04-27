@@ -49,9 +49,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiErrorResponse> handleRse(ResponseStatusException e) {
         int status = e.getStatusCode().value();
-        String code = mapStatusToCode(status);
-        String message = e.getReason() != null ? e.getReason() : "请求处理失败";
-        return ResponseEntity.status(status).body(new ApiErrorResponse(code, message));
+        String reason = e.getReason() != null ? e.getReason() : "请求处理失败";
+        String code = (reason.startsWith("VECTOR_TIMEOUT") && status == 502)
+                ? "VECTOR_TIMEOUT"
+                : mapStatusToCode(status);
+        return ResponseEntity.status(status).body(new ApiErrorResponse(code, reason));
     }
 
     private static String mapStatusToCode(int status) {

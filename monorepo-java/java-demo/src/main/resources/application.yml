@@ -15,8 +15,20 @@ spring:
           # 与 Python 侧默认 qwen-turbo 对齐；Function Calling（/api/v1/fc/chat、fc_min.py）建议 qwen-plus 等支持 tools 的模型
           model: ${LLM_MODEL:qwen-turbo}
 
-# 第 1 周第 5 天：网关占位鉴权 + 内存限流（多实例不共享，生产请用统一网关/Redis 限流替代）
+# 第 2 周：意图槽位 + Structured Output + L0 滑窗（详见 docs/memory-l0-l1.md）
 app:
+  # 第 3 周：Python 向量服务（Milvus 先 ingest，再 uvicorn week03.api）
+  vector:
+    base-url: ${APP_VECTOR_BASE_URL:http://127.0.0.1:8010}
+    connect-timeout-ms: 5000
+    read-timeout-ms: 5000
+  structure:
+    # 与 prompts/structure-v1.txt、structure-v2.txt 对应；可用 Profile v1 / v2 或 --app.structure.prompt-version= 覆盖
+    prompt-version: v1
+    l0:
+      max-messages: 12
+    log:
+      max-user-chars-in-log: 100
   security:
     api-key-header: X-API-Key
     # 占位用 demo；部署时可设环境变量覆盖（不要提交真密钥到仓库）
@@ -24,6 +36,8 @@ app:
     public-paths:
       - /api/v1/health/**
       - /error
+      # 第 3 周课表：vector-demo 可不做鉴权；生产请关或改网关
+      - /api/v1/vector-demo
   rate-limit:
     enabled: true
     per-minute: 30

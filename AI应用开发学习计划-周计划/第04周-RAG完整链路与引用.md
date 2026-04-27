@@ -4,8 +4,8 @@
 
 ## 本周目标
 
-- Python：`retrieve → 拼 system/user prompt → 调用 LLM`；在 prompt 中要求模型**在答案末尾用 JSON 列出引用的 chunk id 或短摘**；解析后与原文对齐。本链路由文档中**标为** **L2 外显/检索记忆**（**企业知识**），**不要** 与第 2 周 **L0 对话记忆** 混为同一库而不加说明（见 [`记忆架构-索引`](./记忆架构-索引.md)）。
-- Java：`POST /api/v1/ask`：`{ "question": "..." }` → 调 Python `search` + 本机拼 prompt 再调 LLM，**或** 调 Python 统一 `POST /rag/ask`（二选一，推荐 **Python 一个聚合接口 + Java 网关** 降低 Java 端 prompt 管理负担）。**若** 带 `sessionId`，在架构说明中写清其用途（**审计/多轮**），**不** 表示把**对话文本** 写进**向量**知识库**除非** 你有意设计为「可检索对话」（一般**不做**）。
+- Python：**优先** 用 **LangChain** 的检索链/ LCEL 思路（如 `create_retrieval_chain`、**RAG 模板** + 对话模型），或 **LangGraph** 将 `retrieve` / `augment` / `generate` 拆成**节点**与边；在生成阶段，**引用列表** 尽量用**第 2 周**已熟悉的 **structured output**（Pydantic）输出 `citation_ids` / `excerpt`，避免手写 JSON 正则为唯一方案。`retrieve → 拼 system/user prompt → 调用 LLM` 的**语义**不变。本链路由文档中**标为** **L2 外显/检索记忆**（**企业知识**），**不要** 与第 2 周 **L0 对话记忆** 混为同一库而不加说明（见 [`记忆架构-索引`](./记忆架构-索引.md)）。
+- Java：`POST /api/v1/ask`：`{ "question": "..." }` → 调 Python `search` + 本机以 **`ChatClient` + 通义** 再调一次 LLM，**或** 调 Python 统一 `POST /rag/ask`（二选一，推荐 **Python 一个聚合接口 + Java 网关** 降低 Java 端 prompt 管理负担；Java 若本地生成，**引用字段** 同样**优先** **Structured Output → DTO**）。**若** 带 `sessionId`，在架构说明中写清其用途（**审计/多轮**），**不** 表示把**对话文本** 写进**向量**知识库**除非** 你有意设计为「可检索对话」（一般**不做**）。
 
 > **推荐架构（本周可落地）**：  
 > - Python：`/rag/ask` 内部用第 3 周检索 + 一次 chat。  
@@ -22,7 +22,7 @@
 
 ### 第 2 天：Python 端到端
 
-- [ ] 函数或 FastAPI `POST /rag/ask`：`question` in → 调检索 topK=4 → 拼 prompt → LLM → 解析引用。
+- [ ] 函数或 FastAPI `POST /rag/ask`：`question` in → 调检索 topK=4 → 拼 prompt → LLM → **用 LangChain structured output 或 Pydantic** 解析引用（**与手写 JSON 二选一**时优先框架）。
 - [ ] 返回体：`{ "answer": "...", "citations": [{ "id", "excerpt" }] }`。
 - [ ] 自测：问「请假怎么申请」应引用假数据里的相关 chunk。
 

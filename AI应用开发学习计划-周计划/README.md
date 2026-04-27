@@ -2,7 +2,8 @@
 
 > 与上级文档 [`../AI应用开发学习计划-Java与Python双轨.md`](../AI应用开发学习计划-Java与Python双轨.md) 配套使用：每周打开对应 `md` 打勾完成。  
 > **工程目录**：Python → [`../monorepo-py/`](../monorepo-py/)，Java → [`../monorepo-java/`](../monorepo-java/)（与仓库根 [`README.md`](../README.md) 一致）。  
-> **Java 侧主栈**：[**Spring AI Alibaba**](https://github.com/alibaba/spring-ai-alibaba)（Spring Boot 3 + 通义/阿里云生态；依赖与**版本** 以官方仓库为准）。  
+> **Java 侧主栈**（**第 2 周起默认**）：[**Spring AI Alibaba**](https://github.com/alibaba/spring-ai-alibaba) + **`spring-ai-alibaba-bom`** + **`spring-ai-alibaba-extensions-bom`**（后者管 **DashScope** 等 starter 版本）；子模块至少含 **`spring-ai-alibaba-starter-dashscope`**、**`spring-ai-alibaba-agent-framework`**；**结构化输出** 以 **Spring AI Structured Output** 为主（详见「第 2 周」周历）。**版本** 以父 POM `monorepo-java/pom.xml` 中变量为准，可随发布升级。  
+> **Python 侧**（**第 2 周起默认**）：**LangChain** 为主、**LangGraph** 在编排/多步/异步场景**按需**使用；与「裸 HTTP + 手搓 JSON」相比，**优先** 用框架的 **structured output、retriever、tool binding**。  
 > **流行技术速查**（ReAct、Function Calling、MCP、Skills）：[`流行技术索引-ReAct-FunctionCalling-MCP-Skills.md`](./流行技术索引-ReAct-FunctionCalling-MCP-Skills.md)  
 > **记忆架构**（L0～L4、RAG 与多轮关系）：[`记忆架构-索引.md`](./记忆架构-索引.md)
 

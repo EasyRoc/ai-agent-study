@@ -1,0 +1,5 @@
+# 激活：spring.profiles.active=v1
+# 使用 v1 提示词（较短约束）
+app:
+  structure:
+    prompt-version: v1
