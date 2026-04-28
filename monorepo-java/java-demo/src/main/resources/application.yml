@@ -22,6 +22,8 @@ app:
     base-url: ${APP_VECTOR_BASE_URL:http://127.0.0.1:8010}
     connect-timeout-ms: 5000
     read-timeout-ms: 5000
+    # 第 4 周：POST /rag/ask 聚合（检索+LLM），可单独调大读超时（毫秒）
+    rag-read-timeout-ms: ${APP_RAG_READ_TIMEOUT_MS:60000}
   structure:
     # 与 prompts/structure-v1.txt、structure-v2.txt 对应；可用 Profile v1 / v2 或 --app.structure.prompt-version= 覆盖
     prompt-version: v1
@@ -38,6 +40,10 @@ app:
       - /error
       # 第 3 周课表：vector-demo 可不做鉴权；生产请关或改网关
       - /api/v1/vector-demo
+      # 第 4 周：RAG 演示，本机可免鉴权；生产请关
+      - /api/v1/ask
+      # 第 6 周：Agent FC（与 /api/v1/fc/chat 区分开）
+      - /api/v1/agent/**
   rate-limit:
     enabled: true
     per-minute: 30

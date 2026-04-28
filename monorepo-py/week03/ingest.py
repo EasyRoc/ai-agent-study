@@ -19,8 +19,7 @@ from dotenv import load_dotenv
 # Document ≈ 一条可检索记录：page_content=正文，metadata=附加字段（和 Map<String,Object> 类似）
 from langchain_core.documents import Document
 from langchain_milvus import Milvus
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-
+from week03.corpus_chunks import build_corpus_documents, corpus_path
 from week03.milvus_settings import (
     COLLECTION_NAME,
     connection_args,
@@ -31,14 +30,7 @@ from week03.milvus_settings import (
 )
 
 _ROOT = Path(__file__).resolve().parent.parent
-_CORPUS = _ROOT / "data" / "corpus.txt"
-
-# 超长行会再被切成多段，chunk_size/overlap 与课表第 3 周一致
-_SPLITTER = RecursiveCharacterTextSplitter(
-    chunk_size=300,
-    chunk_overlap=50,
-    length_function=len,
-)
+_CORPUS = corpus_path()
 
 
 def _load_dotenv() -> None:
@@ -48,21 +40,6 @@ def _load_dotenv() -> None:
         load_dotenv(p)
     else:
         load_dotenv()
-
-
-def _build_docs() -> list[Document]:
-    # Path.read_text() 一次性读文件，等价于 Files.readString(Path)（要指定 utf-8，避免平台默认编码坑）
-    text = _CORPUS.read_text(encoding="utf-8")
-    # 列表推导：一行 = 一个可检索条目标题/正文；`if ln.strip()` 省掉空行
-    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-    docs: list[Document] = []
-    for i, line in enumerate(lines):
-        if len(line) > 300:
-            for j, chunk in enumerate(_SPLITTER.split_text(line)):
-                docs.append(Document(page_content=chunk, metadata={"line": i, "sub": j}))
-        else:
-            docs.append(Document(page_content=line, metadata={"line": i}))
-    return docs
 
 
 def main() -> int:
@@ -79,7 +56,7 @@ def main() -> int:
     dim = embed_dim_one_sample(emb)
     print(f"Embedding 模型: {os.environ.get('EMBEDDING_MODEL', 'text-embedding-v2')}  维数: {dim}")
 
-    docs = _build_docs()
+    docs = build_corpus_documents()
     # 与 Milvus 主键一一对应；auto_id=False 时必须在 add_documents 里显式传 ids
     ids = [f"chunk-{i}" for i in range(len(docs))]
     for i, doc in enumerate(docs):

@@ -49,6 +49,35 @@ curl -s -X POST http://localhost:8080/api/v1/structure \
 curl -s "http://localhost:8080/api/v1/vector-demo?q=报销流程&k=3" | jq .
 ```
 
+### 第 4 周：RAG 网关（`WebClient` → Python `POST /rag/ask`）
+
+- **配置**：与向量共用 `app.vector.base-url`；RAG 读超时单独 **`app.vector.rag-read-timeout-ms`**（默认 **60000**，环境变量 `APP_RAG_READ_TIMEOUT_MS`）。  
+- **实现**：`RagServiceWebClient`（`@Qualifier("ragServiceWebClient")`）+ `RagServiceClient` → `POST /rag/ask`；超时 **502**，`reason` 以 `RAG_TIMEOUT` 开头时 JSON `code` 为 **`RAG_TIMEOUT`**。  
+- **对外接口**：`POST /api/v1/ask`，Body：`{ "question", "topK", "sessionId?","clientRequestId?" }` → 与 Python `rag/ask` 对齐的 `answer` + `citations` + `cited_ids`。  
+- **第 5 周**：`RagServiceClient` 用 **Caffeine** 对**同一 question+topK+sessionId** 做 **5 分钟** 内存缓存；请求头 **`X-No-Cache: 1`** 或 `true` 时跳过该缓存。若带 **`clientRequestId`** 且 30 分钟内重复，**幂等**直接返回同一份成功结果（演示级）。  
+- `sessionId` / Python **L0 短期记忆** 见 Python `week04/session_memory`；混合检索见 `week05/`。  
+- **鉴权**：`/api/v1/ask` 已加入 `app.security.public-paths`（本机演示）。  
+- 验收样例：仓库根目录 [`docs/rag-samples.md`](../../../docs/rag-samples.md)。
+
+```bash
+# Python 8010 已起且已 ingest
+curl -s -X POST http://localhost:8080/api/v1/ask \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"员工请假要怎么操作","topK":4}' | jq .
+```
+
+### 第 6 周：Agent + Function Calling（`Week06AgentFcTools`，`/api/v1/agent/fc`）
+
+- **`POST /api/v1/agent/fc`**，Body：`{"prompt":"…"}`（同 `FcChatRequest`）；工具：**`knowledge_search`**（调 Python `/search`）、**`get_weather_mock`**、**`save_user_preference`**（L3 内存 mock）。  
+- 与 **`/api/v1/fc/chat`**（第 1 周计算器 Demo）区分工具集；建议 **`LLM_MODEL=qwen-plus`** 以稳定支持 FC。  
+- **`public-paths`** 含 `/api/v1/agent/**`（演示免鉴权）。  
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/agent/fc \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"病假要提前交哪些材料？再 mock 杭州天气"}' | jq .
+```
+
 ## 环境
 
 - JDK **17+**

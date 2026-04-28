@@ -10,7 +10,32 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 from pathlib import Path
+
+
+def _configure_app_logging() -> None:
+    """
+    仅对业务包加 Handler，不调用 basicConfig(force=True) 以免冲掉 Uvicorn 的访问/错误日志。
+
+    环境变量 LOG_LEVEL 默认 INFO；子 logger（如 week04.rag_service）会向上冒泡到 week04。
+    """
+    name = (os.environ.get("LOG_LEVEL") or "INFO").strip().upper()
+    level = getattr(logging, name, logging.INFO)
+    fmt = logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s")
+    for ns in ("week04", "week05", "week06", "week03"):
+        lg = logging.getLogger(ns)
+        lg.setLevel(level)
+        if lg.handlers:
+            continue
+        h = logging.StreamHandler(sys.stderr)
+        h.setLevel(level)
+        h.setFormatter(fmt)
+        lg.addHandler(h)
+        lg.propagate = False
+
+
+_configure_app_logging()
 
 from dotenv import load_dotenv
 # FastAPI ≈ 轻量 Web 框架，声明式路由 + 自动 OpenAPI，习惯上可对照 Spring WebFlux/MVC 的 @RestController
@@ -28,6 +53,9 @@ from week03.milvus_settings import (
     register_orm_connection_for_langchain_milvus,
     server_and_collection_ok,
 )
+from week04.rag_api import router as _rag_router
+from week05.rag_task_api import router as _rag_tasks_router
+from week06.agent_api import router as _week06_agent_router
 
 _ROOT = Path(__file__).resolve().parent.parent
 
@@ -35,9 +63,9 @@ logger = logging.getLogger(__name__)
 
 # 模块级单例：uvicorn 会加载本模块的 `app`，类似 Spring 里拿 ApplicationContext 上挂的那个主 Bean
 app = FastAPI(
-    title="week03-vector",
-    description="L2 外显/检索记忆（非 L0 会话）。向量库为 Milvus，见 week03/milvus_settings.py。",
-    version="0.1.0",
+    title="aimodel-week03-06",
+    description="L2 /search；RAG /rag/tasks；第6周 Agent /agent/fc /agent/react",
+    version="0.4.0",
 )
 
 
@@ -162,3 +190,9 @@ def embed_one(body: EmbedBody) -> EmbedResponse:
     m = os.environ.get("EMBEDDING_MODEL", "text-embedding-v2")
     return EmbedResponse(model=m, dimension=len(vec))
 
+
+# 第 4 周：/rag/ask 与 week03 共用进程与端口
+app.include_router(_rag_router)
+# 第 5 周：长 RAG 任务 202 形态（内存轮询，演示用）
+app.include_router(_rag_tasks_router)
+app.include_router(_week06_agent_router)

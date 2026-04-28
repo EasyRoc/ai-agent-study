@@ -4,10 +4,11 @@
 
 ## 本周目标
 
-- Python：**优先** 用 **LangChain** 的检索链/ LCEL 思路（如 `create_retrieval_chain`、**RAG 模板** + 对话模型），或 **LangGraph** 将 `retrieve` / `augment` / `generate` 拆成**节点**与边；在生成阶段，**引用列表** 尽量用**第 2 周**已熟悉的 **structured output**（Pydantic）输出 `citation_ids` / `excerpt`，避免手写 JSON 正则为唯一方案。`retrieve → 拼 system/user prompt → 调用 LLM` 的**语义**不变。本链路由文档中**标为** **L2 外显/检索记忆**（**企业知识**），**不要** 与第 2 周 **L0 对话记忆** 混为同一库而不加说明（见 [`记忆架构-索引`](./记忆架构-索引.md)）。
-- Java：`POST /api/v1/ask`：`{ "question": "..." }` → 调 Python `search` + 本机以 **`ChatClient` + 通义** 再调一次 LLM，**或** 调 Python 统一 `POST /rag/ask`（二选一，推荐 **Python 一个聚合接口 + Java 网关** 降低 Java 端 prompt 管理负担；Java 若本地生成，**引用字段** 同样**优先** **Structured Output → DTO**）。**若** 带 `sessionId`，在架构说明中写清其用途（**审计/多轮**），**不** 表示把**对话文本** 写进**向量**知识库**除非** 你有意设计为「可检索对话」（一般**不做**）。
+- Python：**优先** 用 **LangChain** 的检索链/ LCEL 思路（如 `create_retrieval_chain`、**RAG 模板** + 对话模型），或 **LangGraph** 将 `retrieve` / `augment` / `generate` 拆成**节点**与边；在生成阶段，**引用列表** 尽量用**第 2 周**已熟悉的 **structured output**（Pydantic）输出 `citation_ids` / `excerpt`，避免手写 JSON 正则为唯一方案。`retrieve → 拼 system/user prompt → 调用 LLM` 的**语义**不变。本链路由文档中**标为** **L2 外显/检索记忆**（**企业知识**），**不要** 与第 2 周 **L0 对话记忆** 混为同一库而不加说明（见 `[记忆架构-索引](./记忆架构-索引.md)`）。
+- Java：`POST /api/v1/ask`：`{ "question": "..." }` → 调 Python `search` + 本机以 `**ChatClient` + 通义** 再调一次 LLM，**或** 调 Python 统一 `POST /rag/ask`（二选一，推荐 **Python 一个聚合接口 + Java 网关** 降低 Java 端 prompt 管理负担；Java 若本地生成，**引用字段** 同样**优先** **Structured Output → DTO**）。**若** 带 `sessionId`，在架构说明中写清其用途（**审计/多轮**），**不** 表示把**对话文本** 写进**向量**知识库**除非** 你有意设计为「可检索对话」（一般**不做**）。
 
 > **推荐架构（本周可落地）**：  
+>
 > - Python：`/rag/ask` 内部用第 3 周检索 + 一次 chat。  
 > - Java：只做转发、鉴权、限流。  
 > 若你希望 Java 也拼 prompt，则两边各保留一条演示路径，面试可讲清分工。
@@ -16,45 +17,45 @@
 
 ### 第 1 天：RAG prompt 定稿
 
-- [ ] 写清：`system` 里「只根据给定的【参考资料】回答；不得编造；无资料则说不知道」。
-- [ ] `user` 里放：`参考资料` 若干段 + 用户问题。
-- [ ] 要求输出格式：`答案正文` + 最后一行可解析的 `CITATION_IDS: id1,id2` 或 JSON。
+- 写清：`system` 里「只根据给定的【参考资料】回答；不得编造；无资料则说不知道」。
+- `user` 里放：`参考资料` 若干段 + 用户问题。
+- 要求输出格式：`答案正文` + 最后一行可解析的 `CITATION_IDS: id1,id2` 或 JSON。
 
 ### 第 2 天：Python 端到端
 
-- [ ] 函数或 FastAPI `POST /rag/ask`：`question` in → 调检索 topK=4 → 拼 prompt → LLM → **用 LangChain structured output 或 Pydantic** 解析引用（**与手写 JSON 二选一**时优先框架）。
-- [ ] 返回体：`{ "answer": "...", "citations": [{ "id", "excerpt" }] }`。
-- [ ] 自测：问「请假怎么申请」应引用假数据里的相关 chunk。
+- 函数或 FastAPI `POST /rag/ask`：`question` in → 调检索 topK=4 → 拼 prompt → LLM → **用 LangChain structured output 或 Pydantic** 解析引用（**与手写 JSON 二选一**时优先框架）。
+- 返回体：`{ "answer": "...", "citations": [{ "id", "excerpt" }] }`。
+- 自测：问「请假怎么申请」应引用假数据里的相关 chunk。
 
 ### 第 3 天：重排（概念 + 轻量实现）
 
-- [ ] 读文档：什么是 **reranker**；若不想接模型，用 **二次 LLM 调用**「从下面 4 段里选最相关的 2 段」作为简化版（可选，本周可跳过）。
-- [ ] 若跳过：在笔记写一句「未实现 rerank 的原因 + 第 5 周补」。
+- 读文档：什么是 **reranker**；若不想接模型，用 **二次 LLM 调用**「从下面 4 段里选最相关的 2 段」作为简化版（可选，本周可跳过）。
+- 若跳过：在笔记写一句「未实现 rerank 的原因 + 第 5 周补」。
 
 ### 第 4 天：Java 侧契约
 
-- [ ] 若走聚合接口：在 Java 中定义 `RagRequest` / `RagResponse` 与 OpenAPI 描述（注释或 `springdoc` 均可）。
-- [ ] 实现 `POST /ask` 转发到 `http://python/rag/ask`，超时与第 1 周一致或略长（如 60s）。
+- 若走聚合接口：在 Java 中定义 `RagRequest` / `RagResponse` 与 OpenAPI 描述（注释或 `springdoc` 均可）。
+- 实现 `POST /ask` 转发到 `http://python/rag/ask`，超时与第 1 周一致或略长（如 60s）。
 
 ### 第 5 天：与第 1～3 周联调
 
-- [ ] 全链路 `curl`：从 **Java 入口** 问一句，**日志里**能看到 Python 被调用。
-- [ ] 故意问「无资料问题」，答案应为「不知道」类表述（验收 prompt 效果）。
+- 全链路 `curl`：从 **Java 入口** 问一句，**日志里**能看到 Python 被调用。
+- 故意问「无资料问题」，答案应为「不知道」类表述（验收 prompt 效果）。
 
 ### 第 6 天：带引用的验收
 
-- [ ] 保存 **截图** 或日志：`answer` + `citations` 非空且 excerpt 能对应上 chunk（人工瞄一眼即可）。
-- [ ] 在 `docs/rag-samples.md` 写 2 个**好例子**、1 个**拒答**例子。
+- 保存 **截图** 或日志：`answer` + `citations` 非空且 excerpt 能对应上 chunk（人工瞄一眼即可）。
+- 在 `docs/rag-samples.md` 写 2 个**好例子**、1 个**拒答**例子。
 
 ### 第 7 天：小复盘
 
-- [ ] 画**架构图**（3 个框：Java / Python-检索 / 模型；箭头标 HTTP）。
-- [ ] 列表：若「引用幻觉」出现，你打算在 **第 5 周** 用混合检索/更强约束 怎么修（写 bullet 即可）。
+- 画**架构图**（3 个框：Java / Python-检索 / 模型；箭头标 HTTP）。
+- 列表：若「引用幻觉」出现，你打算在 **第 5 周** 用混合检索/更强约束 怎么修（写 bullet 即可）。
 
 ## 周产出物
 
-- [ ] 可演示「一问一答+引用」1 次（从 Java 或从 Python 入口均可，**至少一端**是 Java 对外）。
-- [ ] `docs/rag-samples.md` 至少 3 例。
+- 可演示「一问一答+引用」1 次（从 Java 或从 Python 入口均可，**至少一端**是 Java 对外）。
+- `docs/rag-samples.md` 至少 3 例。
 
 ## 完成标准
 
@@ -67,3 +68,4 @@
 ## 选做
 
 - 在回答里**标脚注 [1] [2]** 与 `citations` 数组一一对应，更利于产品展示。
+
